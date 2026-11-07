@@ -66,7 +66,7 @@ async function loadDashboard(){
  if(!teacher){await loadTests();await loadResults()}
 }
 async function loadTests(){
- let {data,error}=await db.from('tests').select('id,title,description,duration_minutes,max_attempts,submitted_at').eq('is_published',true).order('submitted_at',{ascending:false});
+ let {data,error}=await db.from('tests').select('id,title,description,duration_minutes,max_attempts,submitted_at').eq('is_published',true).order('created_at',{ascending:false});
  if(error){$('testsList').textContent=error.message;return}
  if(!data.length){$('testsList').textContent='No tests have been published yet.';return}
  let ids=data.map(t=>t.id), used={};
