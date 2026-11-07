@@ -66,7 +66,7 @@ async function loadDashboard(){
  if(!teacher){await loadTests();await loadResults()}
 }
 async function loadTests(){
- let {data,error}=await db.from('tests').select('id,title,description,duration_minutes,max_attempts,created_at').eq('is_published',true).order('created_at',{ascending:false});
+ let {data,error}=await db.from('tests').select('id,title,description,duration_minutes,max_attempts,submitted_at').eq('is_published',true).order('submitted_at',{ascending:false});
  if(error){$('testsList').textContent=error.message;return}
  if(!data.length){$('testsList').textContent='No tests have been published yet.';return}
  let ids=data.map(t=>t.id), used={};
@@ -99,15 +99,15 @@ async function submitAnswers(testId,timedOut){
  message('testMsg',timedOut?'Time is up. Your answers have been submitted automatically.':'Test submitted! Your score has been saved.');
  form.querySelectorAll('input,button').forEach(x=>x.disabled=true);await loadResults();await loadTests();
 }
-async function loadResults(){let {data,error}=await db.from('submissions').select('id,test_id,score,feedback,created_at,tests(title)').eq('student_id',currentUser.id).order('created_at',{ascending:false});if(error){$('myResults').textContent=error.message;return}$('myResults').innerHTML=data.length?data.map(s=>`<div class="question"><b>${escapeHtml(s.tests?.title||'Test')}</b><p>Score: ${escapeHtml(s.score??'Pending')}</p><p>Teacher feedback: ${escapeHtml(s.feedback||'No comment yet')}</p></div>`).join(''):'You have not submitted any tests yet.'}
+async function loadResults(){let {data,error}=await db.from('submissions').select('id,test_id,score,feedback,submitted_at,tests(title)').eq('student_id',currentUser.id).order('submitted_at',{ascending:false});if(error){$('myResults').textContent=error.message;return}$('myResults').innerHTML=data.length?data.map(s=>`<div class="question"><b>${escapeHtml(s.tests?.title||'Test')}</b><p>Score: ${escapeHtml(s.score??'Pending')}</p><p>Teacher feedback: ${escapeHtml(s.feedback||'No comment yet')}</p></div>`).join(''):'You have not submitted any tests yet.'}
 async function createTest(){let title=$('testTitle').value.trim();if(!title)return message('mainMsg','Enter a test title.');let {data,error}=await db.from('tests').insert({title,description:$('testDescription').value,duration_minutes:Number($('testDuration').value)||30,max_attempts:Number($('testAttempts').value)||1,created_by:currentUser.id,is_published:false}).select().single();if(error)return message('mainMsg',error.message);message('mainMsg','Draft test created. Now add questions.');$('testTitle').value='';await loadDrafts();$('draftSelect').value=data.id}
-async function loadDrafts(){let {data,error}=await db.from('tests').select('id,title').eq('created_by',currentUser.id).eq('is_published',false).order('created_at',{ascending:false});if(error){$('draftSelect').innerHTML='';message('mainMsg',error.message);return}drafts=data||[];$('draftSelect').innerHTML=drafts.map(t=>`<option value="${t.id}">${escapeHtml(t.title)}</option>`).join('')||'<option value="">No draft tests</option>'}
+async function loadDrafts(){let {data,error}=await db.from('tests').select('id,title').eq('created_by',currentUser.id).eq('is_published',false).order('submitted_at',{ascending:false});if(error){$('draftSelect').innerHTML='';message('mainMsg',error.message);return}drafts=data||[];$('draftSelect').innerHTML=drafts.map(t=>`<option value="${t.id}">${escapeHtml(t.title)}</option>`).join('')||'<option value="">No draft tests</option>'}
 async function addQuestion(){let testId=$('draftSelect').value;if(!testId)return message('mainMsg','Create or select a draft test first.');let options={A:$('optA').value.trim(),B:$('optB').value.trim(),C:$('optC').value.trim(),D:$('optD').value.trim()};if(!$('qText').value.trim()||Object.values(options).some(x=>!x))return message('mainMsg','Complete the question and all four options.');let {count,error:countError}=await db.from('questions').select('id',{count:'exact',head:true}).eq('test_id',testId);if(countError)return message('mainMsg','Could not count existing questions: '+countError.message);let nextNumber=(count||0)+1;let {data,error}=await db.rpc('add_test_question',{p_test_id:testId,p_question_text:$('qText').value.trim(),p_options:options,p_correct_option:$('correct').value,p_marks:Number($('qMarks').value)||1,p_question_number:nextNumber});if(error)return message('mainMsg','Question not added: '+error.message);message('mainMsg','Question '+nextNumber+' added successfully.');['qText','optA','optB','optC','optD'].forEach(id=>$(id).value='')}
 async function publishTest(){let id=$('draftSelect').value;if(!id)return message('mainMsg','Select a draft test.');let {count,error:countError}=await db.from('questions').select('*',{count:'exact',head:true}).eq('test_id',id);if(countError)return message('mainMsg',countError.message);if(!count)return message('mainMsg','Add at least one question before publishing.');let {error}=await db.from('tests').update({is_published:true}).eq('id',id).eq('created_by',currentUser.id);if(error)return message('mainMsg',error.message);message('mainMsg','Test published! Students can now see it.');await loadDrafts()}
 async function loadSubmissions(){
- let {data:tests,error:te}=await db.from('tests').select('id,title,is_published,duration_minutes,max_attempts,created_at').eq('created_by',currentUser.id).order('created_at',{ascending:false});
+ let {data:tests,error:te}=await db.from('tests').select('id,title,is_published,duration_minutes,max_attempts,submitted_at').eq('created_by',currentUser.id).order('submitted_at',{ascending:false});
  if(te){$('teacherTests').textContent=te.message;return}
- let {data:allSubs,error:se}=await db.from('submissions').select('id,student_id,test_id,score,feedback,created_at').order('created_at',{ascending:false});
+ let {data:allSubs,error:se}=await db.from('submissions').select('id,student_id,test_id,score,feedback,submitted_at').order('submitted_at',{ascending:false});
  if(se){$('submissions').textContent=se.message;return}
  let mine=(allSubs||[]).filter(s=>(tests||[]).some(t=>t.id===s.test_id));
  let ids=[...new Set(mine.map(s=>s.student_id))], profiles=[];
@@ -119,8 +119,8 @@ async function loadSubmissions(){
  }).join(''):'You have not created any tests yet.';
  $('submissions').innerHTML=mine.length?mine.map(s=>{
    let learner=profileMap[s.student_id]||{}, test=tests.find(t=>t.id===s.test_id)||{};
-   let attemptNo=mine.filter(x=>x.test_id===s.test_id&&x.student_id===s.student_id&&new Date(x.created_at)<=new Date(s.created_at)).length;
-   return `<div class="question"><b>${escapeHtml(learner.full_name||'Learner')}</b> <span class="pill">${escapeHtml(learner.class_name||'Class not provided')}</span><p>Test: ${escapeHtml(test.title||'Test')} · Attempt ${attemptNo}</p><p><b>Mark obtained: ${escapeHtml(s.score??'Pending')}</b></p><p>Submitted: ${new Date(s.created_at).toLocaleString()}</p><label>Teacher comment</label><textarea id="fb${s.id}" rows="2">${escapeHtml(s.feedback||'')}</textarea><button onclick="saveFeedback('${s.id}')">Save comment</button></div>`
+   let attemptNo=mine.filter(x=>x.test_id===s.test_id&&x.student_id===s.student_id&&new Date(x.submitted_at)<=new Date(s.submitted_at)).length;
+   return `<div class="question"><b>${escapeHtml(learner.full_name||'Learner')}</b> <span class="pill">${escapeHtml(learner.class_name||'Class not provided')}</span><p>Test: ${escapeHtml(test.title||'Test')} · Attempt ${attemptNo}</p><p><b>Mark obtained: ${escapeHtml(s.score??'Pending')}</b></p><p>Submitted: ${new Date(s.submitted_at).toLocaleString()}</p><label>Teacher comment</label><textarea id="fb${s.id}" rows="2">${escapeHtml(s.feedback||'')}</textarea><button onclick="saveFeedback('${s.id}')">Save comment</button></div>`
  }).join(''):'No learners have submitted your tests yet.';
 }
 async function deleteTest(id){
