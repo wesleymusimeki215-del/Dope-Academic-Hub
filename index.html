@@ -607,12 +607,29 @@ async function loadSubmissions(tests) {
 }
 
 async function giveFeedback(id,oldText) {
-  const feedback=prompt('Enter feedback for this learner:',oldText);
-  if(feedback===null) return;
-  const {error}=await db.from('submissions').update({feedback}).eq('id',id);
-  if(error) return alert(error.message);
-  alert('Feedback saved.');
+  const feedback = prompt('Enter feedback for this learner:', oldText);
+  if (feedback === null) return;
+
+  const { data, error } = await db
+    .from('submissions')
+    .update({ feedback: feedback })
+    .eq('id', id)
+    .select('id, feedback')
+    .maybeSingle();
+
+  if (error) {
+    alert('Feedback was NOT saved: ' + error.message);
+    return;
+  }
+
+  if (!data) {
+    alert('Feedback was NOT saved. No submission was updated. Check database permissions.');
+    return;
+  }
+
+  alert('Feedback saved successfully!');
   await loadTeacher();
+}
 }
 
 async function loadAdminUsers() {
