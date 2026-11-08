@@ -1,158 +1,693 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dope Academic Hub</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--navy:#101b35;--blue:#315efb;--paper:#f4f7fc;--ink:#17233c}
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--paper);color:var(--ink)}
-header{background:var(--navy);color:white;padding:22px 5%;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-header h1{margin:0;font-size:22px}header small{color:#cbd5ee}
-main{max-width:1000px;margin:28px auto;padding:0 16px}.card{background:white;border-radius:15px;padding:22px;margin:16px 0;box-shadow:0 5px 22px #15264a12}
-h2{margin-top:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-input,textarea,select{width:100%;padding:12px;margin:6px 0 14px;border:1px solid #ccd4e2;border-radius:8px;font:inherit}
-button{background:var(--blue);color:white;border:0;border-radius:8px;padding:12px 17px;font-weight:bold;cursor:pointer;margin:4px 4px 4px 0}
-button.secondary{background:#e8edff;color:#1c3da8}button.danger{background:#a52a2a}
-.muted{color:#66738a}.hidden{display:none}.question{border:1px solid #e0e6f0;border-radius:10px;padding:15px;margin:12px 0}
-.option{display:block;padding:7px}.status{padding:10px;border-radius:8px;background:#eef3ff;margin:10px 0;white-space:pre-wrap}button:disabled{opacity:.55;cursor:not-allowed}.pill{display:inline-block;padding:4px 9px;border-radius:20px;background:#e8edff;color:#1c3da8;font-size:12px;font-weight:bold}.small{font-size:13px}
+:root {
+  --navy:#101b35;
+  --blue:#315efb;
+  --light:#f3f6fc;
+  --white:#fff;
+  --green:#138a55;
+  --red:#d93636;
+  --text:#19243b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--light);font-family:Arial,sans-serif;color:var(--text)}
+header{background:var(--navy);color:white;padding:20px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+header h2{margin:0}
+main{max-width:1100px;margin:25px auto;padding:15px}
+.card{background:white;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 15px #0000000d}
+input,textarea,select{width:100%;padding:12px;margin:7px 0 14px;border:1px solid #ccd3df;border-radius:8px;font-size:15px}
+button{background:var(--blue);color:white;border:0;padding:11px 16px;border-radius:8px;cursor:pointer;font-weight:bold;margin:4px}
+button:hover{opacity:.88}
+button.secondary{background:#667085}
+button.danger{background:var(--red)}
+button.success{background:var(--green)}
+.hidden{display:none!important}
+.muted{color:#68748a}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:15px}
+.test{border:1px solid #e0e5ef;border-radius:12px;padding:16px;margin:12px 0}
+.option{display:block;background:#f2f5fb;padding:12px;border-radius:8px;margin:8px 0;cursor:pointer}
+.option input{width:auto;margin:0 8px 0 0}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:15px}
+.tabs button{background:#e1e7f4;color:#17233d}
+.tabs button.active{background:var(--blue);color:white}
+.badge{display:inline-block;padding:5px 9px;background:#e7edff;color:#315efb;border-radius:20px;font-size:12px}
+table{width:100%;border-collapse:collapse;min-width:500px}
+th,td{padding:11px;border-bottom:1px solid #e5e9f0;text-align:left}
+.tablewrap{overflow-x:auto}
+#timer{font-size:22px;font-weight:bold;color:var(--red)}
+.notice{padding:12px;border-radius:8px;background:#fff4d9;margin:10px 0}
 </style>
 </head>
 <body>
-<header><div><h1>DOPE ACADEMIC HUB</h1><small>Learn. Practise. Improve.</small></div><div id="userbar">Online learning & assessments</div></header>
+<header>
+  <h2>🎓 Dope Academic Hub</h2>
+  <div id="headerUser"></div>
+</header>
+
 <main>
 <section id="auth" class="card">
-<h2>Welcome to Dope Academic Hub</h2><p class="muted">Log in to continue, or create a student account.</p>
-<div class="grid">
-<div><h3>Log in</h3><label>Email</label><input id="loginEmail" type="email" placeholder="you@example.com"><label>Password</label><input id="loginPassword" type="password" placeholder="Your password"><button onclick="login()">Log in</button></div>
-<div><h3>Student registration</h3><label>Full name</label><input id="regName" placeholder="Your full name"><label>Class / Form</label><input id="regClass" placeholder="e.g. Form 3"><label>Email</label><input id="regEmail" type="email" placeholder="you@example.com"><label>Password</label><input id="regPassword" type="password" placeholder="At least 8 characters"><button onclick="register()">Create student account</button></div>
-</div><div id="authMsg" class="status hidden"></div>
+  <h2>Welcome to Dope Academic Hub</h2>
+  <p class="muted">Learn. Practise. Test yourself. Improve.</p>
+  <div class="tabs">
+    <button id="loginTab" class="active" onclick="showAuth('login')">Login</button>
+    <button id="registerTab" onclick="showAuth('register')">Register</button>
+  </div>
+  <div id="loginBox">
+    <input id="loginEmail" type="email" placeholder="Email address">
+    <input id="loginPassword" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+  <div id="registerBox" class="hidden">
+    <input id="regName" placeholder="Full name">
+    <input id="regClass" placeholder="Class / Form">
+    <input id="regEmail" type="email" placeholder="Email address">
+    <input id="regPassword" type="password" placeholder="Create password">
+    <button onclick="register()">Create learner account</button>
+  </div>
+  <p id="authMessage"></p>
 </section>
+
 <section id="dashboard" class="hidden">
-<div class="card"><h2 id="welcome">Dashboard</h2><p id="roleText" class="muted"></p><button class="secondary" onclick="loadDashboard()">Refresh</button><button class="danger" onclick="logout()">Log out</button><div id="mainMsg" class="status hidden"></div></div>
-<div id="studentArea" class="hidden">
-<div class="card"><h2>Available tests</h2><div id="testsList">Loading tests…</div></div>
-<div class="card"><h2>My results and teacher feedback</h2><div id="myResults">Loading results…</div></div>
-</div>
-<div id="adminArea" class="hidden"><div class="card"><h2>Admin: manage user roles</h2><p class="muted">Choose whether each account is a learner, teacher or administrator.</p><div id="adminUsers">Loading users…</div></div><div class="card"><h2>Admin: all tests</h2><div id="adminTests">Loading tests…</div></div></div>
-<div id="teacherArea" class="hidden">
-<div class="card"><h2>Create a test</h2><label>Test title</label><input id="testTitle" placeholder="e.g. Form 3 Biology Test"><label>Instructions / description</label><textarea id="testDescription" rows="2" placeholder="Read each question carefully"></textarea><div class="grid"><div><label>Duration (minutes)</label><input id="testDuration" type="number" min="1" value="30"></div><div><label>Attempts allowed per learner</label><select id="testAttempts"><option value="1">1 attempt</option><option value="2">2 attempts</option></select></div></div><button onclick="createTest()">Create draft test</button></div>
-<div class="card"><h2>Add a multiple-choice question</h2><label>Select your draft test</label><select id="draftSelect"></select><label>Question</label><textarea id="qText" rows="2" placeholder="Enter question"></textarea><div class="grid"><div><label>Option A</label><input id="optA"></div><div><label>Option B</label><input id="optB"></div><div><label>Option C</label><input id="optC"></div><div><label>Option D</label><input id="optD"></div></div><div class="grid"><div><label>Correct option</label><select id="correct"><option>A</option><option>B</option><option>C</option><option>D</option></select></div><div><label>Marks</label><input id="qMarks" type="number" min="1" value="1"></div></div><button onclick="addQuestion()">Add question</button><button class="secondary" onclick="publishTest()">Publish selected test</button></div>
-<div class="card"><h2>My published tests</h2><p class="muted">See participation and remove tests you created.</p><div id="teacherTests">Loading tests…</div></div><div class="card"><h2>Learner marks and feedback</h2><div id="submissions">Loading submissions…</div></div>
-</div>
+  <div class="card">
+    <h2 id="welcome"></h2>
+    <p id="roleText" class="muted"></p>
+    <button class="secondary" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="tabs" id="mainTabs">
+    <button onclick="openPanel('learnerPanel',this)">Learner tests</button>
+    <button id="teacherTab" class="hidden" onclick="openPanel('teacherPanel',this)">Teacher portal</button>
+    <button id="adminTab" class="hidden" onclick="openPanel('adminPanel',this)">Admin portal</button>
+    <button onclick="openPanel('resultsPanel',this)">My results</button>
+  </div>
+
+  <section id="learnerPanel" class="card">
+    <h2>Available tests</h2>
+    <div id="testList">Loading tests...</div>
+  </section>
+
+  <section id="testPanel" class="card hidden">
+    <h2 id="activeTestTitle"></h2>
+    <p id="testDescription" class="muted"></p>
+    <p>Time remaining: <span id="timer">--:--</span></p>
+    <div id="questionArea"></div>
+    <button class="success" onclick="submitTest(false)">Submit answers</button>
+    <button class="secondary" onclick="cancelTest()">Exit test</button>
+  </section>
+
+  <section id="resultsPanel" class="card hidden">
+    <h2>My results</h2>
+    <div id="myResults">Loading results...</div>
+  </section>
+
+  <section id="teacherPanel" class="hidden">
+    <div class="card">
+      <h2>Teacher portal</h2>
+      <h3>Create a test</h3>
+      <input id="newTitle" placeholder="Test title">
+      <textarea id="newDescription" placeholder="Test instructions or description"></textarea>
+      <div class="grid">
+        <div>
+          <label>Duration (minutes)</label>
+          <input id="newDuration" type="number" min="1" value="30">
+        </div>
+        <div>
+          <label>Allowed attempts</label>
+          <select id="newAttempts">
+            <option value="1">1 attempt</option>
+            <option value="2">2 attempts</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="createTest()">Create test</button>
+      <p id="createMessage"></p>
+    </div>
+
+    <div class="card">
+      <h3>My tests</h3>
+      <div id="teacherTests">Loading...</div>
+    </div>
+
+    <div class="card">
+      <h3>Add questions</h3>
+      <select id="questionTest"></select>
+      <input id="questionText" placeholder="Enter question">
+      <input id="optionA" placeholder="Option A">
+      <input id="optionB" placeholder="Option B">
+      <input id="optionC" placeholder="Option C">
+      <input id="optionD" placeholder="Option D">
+      <label>Correct option</label>
+      <select id="correctOption">
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+      </select>
+      <input id="questionMarks" type="number" min="1" value="1" placeholder="Marks">
+      <button onclick="addQuestion()">Add question</button>
+      <p id="questionMessage"></p>
+    </div>
+
+    <div class="card">
+      <h3>Learner submissions and marks</h3>
+      <div id="teacherResults">Loading...</div>
+    </div>
+  </section>
+
+  <section id="adminPanel" class="hidden">
+    <div class="card">
+      <h2>Administrator portal</h2>
+      <p>Manage account roles. Only trusted administrators should have access.</p>
+      <button onclick="loadAdminUsers()">Refresh users</button>
+      <div id="adminUsers">Loading...</div>
+    </div>
+    <div class="card">
+      <h3>All tests</h3>
+      <button onclick="loadAdminTests()">Refresh tests</button>
+      <div id="adminTests"></div>
+    </div>
+  </section>
 </section>
 </main>
+
 <script>
-/* Replace these two values with your own Supabase Project URL and Publishable key. */
 const SUPABASE_URL = "https://snfskqjmoxmpkcftiuup.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_sWrEHVnE7W7nn_DdJ4g3lg_TLZPEaWs";
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-let currentUser=null, profile=null, drafts=[];
-const $=id=>document.getElementById(id);
-function message(id,text){$(id).textContent=text;$(id).classList.remove('hidden')}
-function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-async function login(){let {data,error}=await db.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});if(error)return message('authMsg',error.message);currentUser=data.user;await loadDashboard()}
-async function register(){let full_name=$('regName').value.trim(),class_name=$('regClass').value.trim(),email=$('regEmail').value.trim(),password=$('regPassword').value;if(!full_name||!email||password.length<8)return message('authMsg','Enter your name, email and a password of at least 8 characters.');let {data,error}=await db.auth.signUp({email,password,options:{data:{full_name,class_name}}});if(error)return message('authMsg',error.message);message('authMsg','Account created. If email confirmation is enabled, confirm your email, then log in.');}
-async function logout(){await db.auth.signOut();location.reload()}
-async function loadDashboard(){
- let {data:{user}}=await db.auth.getUser();if(!user){$('auth').classList.remove('hidden');$('dashboard').classList.add('hidden');return}
- currentUser=user;let p=await db.from('profiles').select('*').eq('id',user.id).single();if(p.error){message('mainMsg','Could not load your profile: '+p.error.message);return}profile=p.data;
- $('auth').classList.add('hidden');$('dashboard').classList.remove('hidden');$('welcome').textContent='Welcome, '+(profile.full_name||user.email);$('userbar').textContent=user.email;$('roleText').textContent='Account type: '+profile.role;
- let teacher=['teacher','admin'].includes(profile.role), admin=profile.role==='admin';
- $('teacherArea').classList.toggle('hidden',!teacher);$('studentArea').classList.toggle('hidden',teacher);$('adminArea').classList.toggle('hidden',!admin);
- if(teacher){await loadDrafts();await loadSubmissions()}
- if(admin){await loadAdminUsers();await loadAdminTests()}
- if(!teacher){await loadTests();await loadResults()}
+const SUPABASE_KEY = "sb_publishable_sWrEHVnE7W7nn_DdJ4g3lg_TLZPEaWs";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let profile = null;
+let activeTest = null;
+let activeQuestions = [];
+let countdown = null;
+let remainingSeconds = 0;
+let submitting = false;
+
+const $ = id => document.getElementById(id);
+const msg = (id,text) => { $(id).textContent = text; };
+
+function showAuth(which) {
+  $('loginBox').classList.toggle('hidden',which !== 'login');
+  $('registerBox').classList.toggle('hidden',which !== 'register');
+  $('loginTab').classList.toggle('active',which === 'login');
+  $('registerTab').classList.toggle('active',which === 'register');
+  msg('authMessage','');
 }
-async function loadTests(){
- let {data,error}=await db.from('tests').select('id,title,description,duration_minutes,max_attempts,submitted_at').eq('is_published',true).order('created_at',{ascending:false});
- if(error){$('testsList').textContent=error.message;return}
- if(!data.length){$('testsList').textContent='No tests have been published yet.';return}
- let ids=data.map(t=>t.id), used={};
- if(ids.length){let r=await db.from('submissions').select('test_id').eq('student_id',currentUser.id).in('test_id',ids);if(r.error){$('testsList').textContent='Could not load your attempt history: '+r.error.message;return}for(let x of (r.data||[]))used[x.test_id]=(used[x.test_id]||0)+1}
- $('testsList').innerHTML=data.map(t=>{let max=Math.max(1,Number(t.max_attempts)||1),done=used[t.id]||0,left=Math.max(0,max-done);return `<div class="question"><h3>${escapeHtml(t.title)}</h3><p>${escapeHtml(t.description||'')}</p><p class="muted">Duration: ${escapeHtml(t.duration_minutes||30)} minutes | Attempts: ${done}/${max} used</p>${left?`<button onclick="startTest('${t.id}')">Start test (${left} left)</button>`:'<span class="pill">Attempts completed</span>'}</div>`}).join('')
+
+function openPanel(id,button) {
+  ['learnerPanel','teacherPanel','adminPanel','resultsPanel','testPanel'].forEach(x => $(x).classList.add('hidden'));
+  $(id).classList.remove('hidden');
+  document.querySelectorAll('#mainTabs button').forEach(b=>b.classList.remove('active'));
+  if(button) button.classList.add('active');
+
+  if(id === 'learnerPanel') loadTests();
+  if(id === 'resultsPanel') loadResults();
+  if(id === 'teacherPanel') loadTeacher();
+  if(id === 'adminPanel') {loadAdminUsers();loadAdminTests();}
 }
-let activeTimer=null, activeTestId=null, activeDeadline=null;
-async function startTest(testId){
- if(activeTimer)clearInterval(activeTimer);
- let {data:qs,error}=await db.from('questions').select('id,question_text,options,marks,question_number').eq('test_id',testId).order('question_number');
- if(error)return message('mainMsg',error.message);
- if(!qs.length)return message('mainMsg','This test has no questions yet.');
- let {data:test,error:te}=await db.from('tests').select('title,duration_minutes').eq('id',testId).single();
- if(te)return message('mainMsg',te.message);
- let duration=Math.max(1,Number(test.duration_minutes)||30);
- activeTestId=testId;activeDeadline=Date.now()+duration*60000;
- let html=`<div class="card" id="activeTestCard"><h2>${escapeHtml(test.title)}</h2><p><b>Time remaining: <span id="testCountdown">${duration}:00</span></b></p><form id="answerForm">`;
- qs.forEach((q,i)=>{html+=`<div class="question"><b>${i+1}. ${escapeHtml(q.question_text)}</b> <span class="muted">(${q.marks} mark(s))</span>`;for(let k of ['A','B','C','D'])if(q.options&&q.options[k])html+=`<label class="option"><input style="width:auto;margin:0 8px 0 0" type="radio" name="q${q.id}" value="${k}" required> ${k}. ${escapeHtml(q.options[k])}</label>`;html+='</div>'});
- html+=`<button id="submitTestButton" type="button" onclick="submitAnswers('${testId}',false)">Submit answers</button></form><div id="testMsg" class="status hidden"></div></div>`;
- $('studentArea').insertAdjacentHTML('afterbegin',html);window.scrollTo(0,0);
- activeTimer=setInterval(()=>{let left=Math.max(0,Math.ceil((activeDeadline-Date.now())/1000));let mm=Math.floor(left/60),ss=left%60;let el=$('testCountdown');if(el)el.textContent=mm+':'+String(ss).padStart(2,'0');if(left<=0){clearInterval(activeTimer);submitAnswers(testId,true)}},500);
+
+async function register() {
+  const name = $('regName').value.trim();
+  const className = $('regClass').value.trim();
+  const email = $('regEmail').value.trim();
+  const password = $('regPassword').value;
+
+  if(!name || !email || password.length < 6) {
+    return msg('authMessage','Enter your name, email and a password of at least 6 characters.');
+  }
+
+  const {data,error} = await db.auth.signUp({email,password});
+  if(error) return msg('authMessage',error.message);
+
+  if(data.user) {
+    const {error:profileError} = await db.from('profiles').upsert({
+      id:data.user.id,
+      full_name:name,
+      class_name:className,
+      role:'learner'
+    });
+    if(profileError) return msg('authMessage','Account created, but profile setup failed: '+profileError.message);
+  }
+  msg('authMessage','Account created. Check your email if confirmation is required, then log in.');
+  showAuth('login');
 }
-async function submitAnswers(testId,timedOut){
- if(activeTimer)clearInterval(activeTimer);
- let form=$('answerForm');if(!form)return;
- let answers={};for(let el of form.querySelectorAll('input:checked'))answers[el.name.slice(1)]=el.value;
- let btn=$('submitTestButton');if(btn)btn.disabled=true;
- let {data,error}=await db.rpc('submit_test',{p_test_id:testId,p_answers:answers});
- if(error){if(btn)btn.disabled=false;message('testMsg','Could not submit: '+error.message);return}
- message('testMsg',timedOut?'Time is up. Your answers have been submitted automatically.':'Test submitted! Your score has been saved.');
- form.querySelectorAll('input,button').forEach(x=>x.disabled=true);await loadResults();await loadTests();
+
+async function login() {
+  const {data,error} = await db.auth.signInWithPassword({
+    email:$('loginEmail').value.trim(),
+    password:$('loginPassword').value
+  });
+  if(error) return msg('authMessage',error.message);
+  await loadSession(data.user);
 }
-async function loadResults(){let {data,error}=await db.from('submissions').select('id,test_id,score,feedback,submitted_at,tests(title)').eq('student_id',currentUser.id).order('created_at',{ascending:false});if(error){$('myResults').textContent=error.message;return}$('myResults').innerHTML=data.length?data.map(s=>`<div class="question"><b>${escapeHtml(s.tests?.title||'Test')}</b><p>Score: ${escapeHtml(s.score??'Pending')}</p><p>Teacher feedback: ${escapeHtml(s.feedback||'No comment yet')}</p></div>`).join(''):'You have not submitted any tests yet.'}
-async function createTest(){let title=$('testTitle').value.trim();if(!title)return message('mainMsg','Enter a test title.');let {data,error}=await db.from('tests').insert({title,description:$('testDescription').value,duration_minutes:Number($('testDuration').value)||30,max_attempts:Number($('testAttempts').value)||1,created_by:currentUser.id,is_published:false}).select().single();if(error)return message('mainMsg',error.message);message('mainMsg','Draft test created. Now add questions.');$('testTitle').value='';await loadDrafts();$('draftSelect').value=data.id}
-async function loadDrafts(){let {data,error}=await db.from('tests').select('id,title').eq('created_by',currentUser.id).eq('is_published',false).order('created_at',{ascending:false});if(error){$('draftSelect').innerHTML='';message('mainMsg',error.message);return}drafts=data||[];$('draftSelect').innerHTML=drafts.map(t=>`<option value="${t.id}">${escapeHtml(t.title)}</option>`).join('')||'<option value="">No draft tests</option>'}
-async function addQuestion(){let testId=$('draftSelect').value;if(!testId)return message('mainMsg','Create or select a draft test first.');let options={A:$('optA').value.trim(),B:$('optB').value.trim(),C:$('optC').value.trim(),D:$('optD').value.trim()};if(!$('qText').value.trim()||Object.values(options).some(x=>!x))return message('mainMsg','Complete the question and all four options.');let {count,error:countError}=await db.from('questions').select('id',{count:'exact',head:true}).eq('test_id',testId);if(countError)return message('mainMsg','Could not count existing questions: '+countError.message);let nextNumber=(count||0)+1;let {data,error}=await db.rpc('add_test_question',{p_test_id:testId,p_question_text:$('qText').value.trim(),p_options:options,p_correct_option:$('correct').value,p_marks:Number($('qMarks').value)||1,p_question_number:nextNumber});if(error)return message('mainMsg','Question not added: '+error.message);message('mainMsg','Question '+nextNumber+' added successfully.');['qText','optA','optB','optC','optD'].forEach(id=>$(id).value='')}
-async function publishTest(){let id=$('draftSelect').value;if(!id)return message('mainMsg','Select a draft test.');let {count,error:countError}=await db.from('questions').select('*',{count:'exact',head:true}).eq('test_id',id);if(countError)return message('mainMsg',countError.message);if(!count)return message('mainMsg','Add at least one question before publishing.');let {error}=await db.from('tests').update({is_published:true}).eq('id',id).eq('created_by',currentUser.id);if(error)return message('mainMsg',error.message);message('mainMsg','Test published! Students can now see it.');await loadDrafts()}
-async function loadSubmissions(){
- let {data:tests,error:te}=await db.from('tests').select('id,title,is_published,duration_minutes,max_attempts,submitted_at').eq('created_by',currentUser.id).order('created_at',{ascending:false});
- if(te){$('teacherTests').textContent=te.message;return}
- let {data:allSubs,error:se}=await db.from('submissions').select('id,student_id,test_id,score,feedback,submitted_at').order('created_at',{ascending:false});
- if(se){$('submissions').textContent=se.message;return}
- let mine=(allSubs||[]).filter(s=>(tests||[]).some(t=>t.id===s.test_id));
- let ids=[...new Set(mine.map(s=>s.student_id))], profiles=[];
- if(ids.length){let pr=await db.from('profiles').select('id,full_name,class_name').in('id',ids);if(!pr.error)profiles=pr.data||[]}
- let profileMap=Object.fromEntries(profiles.map(x=>[x.id,x]));
- $('teacherTests').innerHTML=tests.length?tests.map(t=>{
-   let attempts=mine.filter(s=>s.test_id===t.id), unique=new Set(attempts.map(s=>s.student_id)).size;
-   return `<div class="question"><b>${escapeHtml(t.title)}</b><p>Status: ${t.is_published?'Published':'Draft'} | Duration: ${escapeHtml(t.duration_minutes||30)} minutes | Allowed attempts: ${escapeHtml(t.max_attempts||1)}</p><p><b>Learners who took it: ${unique}</b> · Total submissions: ${attempts.length}</p><button class="danger" onclick="deleteTest('${t.id}')">Delete test</button></div>`
- }).join(''):'You have not created any tests yet.';
- $('submissions').innerHTML=mine.length?mine.map(s=>{
-   let learner=profileMap[s.student_id]||{}, test=tests.find(t=>t.id===s.test_id)||{};
-   let attemptNo=mine.filter(x=>x.test_id===s.test_id&&x.student_id===s.student_id&&new Date(x.submitted_at)<=new Date(s.submitted_at)).length;
-   return `<div class="question"><b>${escapeHtml(learner.full_name||'Learner')}</b> <span class="pill">${escapeHtml(learner.class_name||'Class not provided')}</span><p>Test: ${escapeHtml(test.title||'Test')} · Attempt ${attemptNo}</p><p><b>Mark obtained: ${escapeHtml(s.score??'Pending')}</b></p><p>Submitted: ${new Date(s.submitted_at).toLocaleString()}</p><label>Teacher comment</label><textarea id="fb${s.id}" rows="2">${escapeHtml(s.feedback||'')}</textarea><button onclick="saveFeedback('${s.id}')">Save comment</button></div>`
- }).join(''):'No learners have submitted your tests yet.';
+
+async function logout() {
+  if(countdown) clearInterval(countdown);
+  await db.auth.signOut();
+  location.reload();
 }
-async function deleteTest(id){
- if(!confirm('Delete this test and all its questions and submissions? This cannot be undone.'))return;
- let {error}=await db.rpc('delete_teacher_test',{p_test_id:id});
- if(error){message('mainMsg','Could not delete test: '+error.message);return}
- message('mainMsg','Test deleted successfully.');await loadDrafts();await loadSubmissions();
+
+async function loadSession(user) {
+  currentUser = user;
+  const {data,error} = await db.from('profiles')
+    .select('id,full_name,class_name,role')
+    .eq('id',user.id).single();
+
+  if(error || !data) {
+    msg('authMessage','Could not load your profile: '+(error?.message || 'Profile missing'));
+    return;
+  }
+
+  profile = data;
+  $('auth').classList.add('hidden');
+  $('dashboard').classList.remove('hidden');
+  $('welcome').textContent = 'Welcome, '+(profile.full_name || user.email);
+  $('roleText').textContent = 'Account type: '+profile.role;
+  $('headerUser').textContent = profile.full_name || user.email;
+
+  const isTeacher = ['teacher','admin'].includes(profile.role);
+  $('teacherTab').classList.toggle('hidden',!isTeacher);
+  $('adminTab').classList.toggle('hidden',profile.role !== 'admin');
+
+  openPanel('learnerPanel');
 }
-async function saveFeedback(id){let {error}=await db.from('submissions').update({feedback:$('fb'+id).value}).eq('id',id);if(error)message('mainMsg',error.message);else message('mainMsg','Feedback saved.')}
-async function loadAdminUsers(){
- let {data,error}=await db.rpc('admin_list_users');
- if(error){$('adminUsers').textContent='Could not load users: '+error.message;return}
- $('adminUsers').innerHTML=(data||[]).map(u=>`<div class="question"><b>${escapeHtml(u.full_name||'Unnamed account')}</b><p class="small">${escapeHtml(u.class_name||'Class not provided')} · ${escapeHtml(u.role)}</p><div class="grid"><div><label>Change role</label><select id="role${u.id}"><option value="student" ${u.role==='student'?'selected':''}>Learner</option><option value="teacher" ${u.role==='teacher'?'selected':''}>Teacher</option><option value="admin" ${u.role==='admin'?'selected':''}>Admin</option></select></div><div style="align-self:end"><button onclick="changeRole('${u.id}')">Save role</button></div></div></div>`).join('')||'No accounts found.';
+
+async function loadTests() {
+  $('testList').textContent = 'Loading tests...';
+  const {data,error} = await db.from('tests')
+    .select('id,title,description,duration_minutes,max_attempts')
+    .eq('is_published',true)
+    .order('created_at',{ascending:false});
+
+  if(error) return msg('testList',error.message);
+  if(!data?.length) return msg('testList','No published tests available yet.');
+
+  const {data:subs,error:subError} = await db.from('submissions')
+    .select('test_id')
+    .eq('student_id',currentUser.id);
+
+  if(subError) return msg('testList',subError.message);
+
+  $('testList').innerHTML = '';
+  data.forEach(t=>{
+    const attempts = (subs||[]).filter(s=>s.test_id===t.id).length;
+    const max = Number(t.max_attempts || 1);
+    const div = document.createElement('div');
+    div.className='test';
+    const title=document.createElement('h3'); title.textContent=t.title;
+    const description=document.createElement('p'); description.textContent=t.description||'';
+    const details=document.createElement('p');
+    details.textContent=`Duration: ${t.duration_minutes||30} minutes | Attempts: ${attempts}/${max}`;
+    const button=document.createElement('button');
+    button.textContent=attempts>=max?'Attempts used':'Start test';
+    button.disabled=attempts>=max;
+    button.onclick=()=>startTest(t);
+    div.append(title,description,details,button);
+    $('testList').appendChild(div);
+  });
 }
-async function changeRole(userId){
- let role=$('role'+userId).value;
- if(!confirm('Change this account role to '+(role==='student'?'Learner':role)+'?'))return;
- let {error}=await db.rpc('admin_set_user_role',{p_user_id:userId,p_role:role});
- if(error){message('mainMsg','Could not change role: '+error.message);return}
- message('mainMsg','User role updated.');await loadAdminUsers();
+
+async function startTest(test) {
+  const {data:subs,error:se} = await db.from('submissions')
+    .select('id').eq('test_id',test.id).eq('student_id',currentUser.id);
+  if(se) return alert(se.message);
+  if((subs||[]).length >= Number(test.max_attempts||1)) return alert('You have used all your attempts.');
+
+  const {data:questions,error} = await db.from('questions')
+    .select('id,question_text,options,question_number,marks')
+    .eq('test_id',test.id).order('question_number');
+
+  if(error) return alert(error.message);
+  if(!questions?.length) return alert('This test has no questions yet.');
+
+  activeTest=test;
+  activeQuestions=questions;
+  submitting=false;
+  $('learnerPanel').classList.add('hidden');
+  $('testPanel').classList.remove('hidden');
+  $('activeTestTitle').textContent=test.title;
+  $('testDescription').textContent=test.description||'';
+  $('questionArea').innerHTML='';
+
+  questions.forEach((q,index)=>{
+    const box=document.createElement('div');
+    box.className='test';
+    const heading=document.createElement('h3');
+    heading.textContent=`Question ${index+1}: ${q.question_text}`;
+    box.appendChild(heading);
+    let options=q.options;
+    if(typeof options==='string') {
+      try {options=JSON.parse(options)} catch(e) {options={};}
+    }
+    ['A','B','C','D'].forEach(letter=>{
+      const value=options?.[letter];
+      if(value===undefined || value===null) return;
+      const label=document.createElement('label');
+      label.className='option';
+      const radio=document.createElement('input');
+      radio.type='radio';
+      radio.name='answer_'+q.id;
+      radio.value=letter;
+      label.append(radio,document.createTextNode(letter+'. '+value));
+      box.appendChild(label);
+    });
+    $('questionArea').appendChild(box);
+  });
+
+  remainingSeconds=Math.max(1,Number(test.duration_minutes||30))*60;
+  updateTimer();
+  countdown=setInterval(()=>{
+    remainingSeconds--;
+    updateTimer();
+    if(remainingSeconds<=0) submitTest(true);
+  },1000);
 }
-async function loadAdminTests(){
- let {data,error}=await db.rpc('admin_list_tests');
- if(error){$('adminTests').textContent=error.message;return}
- $('adminTests').innerHTML=(data||[]).map(t=>`<div class="question"><b>${escapeHtml(t.title)}</b><p>${t.is_published?'Published':'Draft'} · Attempts allowed: ${escapeHtml(t.max_attempts||1)}</p><button class="danger" onclick="deleteAdminTest('${t.id}')">Delete test</button></div>`).join('')||'No tests found.';
+
+function updateTimer() {
+  const m=Math.floor(remainingSeconds/60);
+  const s=remainingSeconds%60;
+  $('timer').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
 }
-async function deleteAdminTest(id){
- if(!confirm('Delete this test and all its questions and submissions? This cannot be undone.'))return;
- let {error}=await db.rpc('delete_teacher_test',{p_test_id:id});
- if(error){message('mainMsg','Could not delete test: '+error.message);return}
- message('mainMsg','Test deleted.');await loadAdminTests();await loadSubmissions();
+
+function cancelTest() {
+  if(!confirm('Exit this test? Your answers will not be submitted.')) return;
+  if(countdown) clearInterval(countdown);
+  activeTest=null;
+  openPanel('learnerPanel');
 }
-db.auth.getSession().then(({data})=>{if(data.session)loadDashboard()});
+
+async function submitTest(auto=false) {
+  if(!activeTest || submitting) return;
+  if(!auto && !confirm('Submit your answers now?')) return;
+  submitting=true;
+  if(countdown) clearInterval(countdown);
+
+  const answers={};
+  activeQuestions.forEach(q=>{
+    const selected=document.querySelector(`input[name="answer_${q.id}"]:checked`);
+    if(selected) answers[q.id]=selected.value;
+  });
+
+  const {data,error} = await db.rpc('submit_test',{
+    p_test_id:activeTest.id,
+    p_answers:answers
+  });
+
+  if(error) {
+    submitting=false;
+    return alert('Submission failed: '+error.message);
+  }
+
+  alert(auto?'Time is up. Your answers have been submitted.':'Your test has been submitted!');
+  activeTest=null;
+  submitting=false;
+  openPanel('resultsPanel');
+}
+
+async function loadResults() {
+  $('myResults').textContent='Loading results...';
+  const {data,error} = await db.from('submissions')
+    .select('id,test_id,score,total_marks,feedback,submitted_at,tests(title)')
+    .eq('student_id',currentUser.id)
+    .order('submitted_at',{ascending:false});
+
+  if(error) return msg('myResults',error.message);
+  if(!data?.length) return msg('myResults','You have not submitted any tests yet.');
+
+  $('myResults').innerHTML='';
+  data.forEach(r=>{
+    const div=document.createElement('div');
+    div.className='test';
+    const h=document.createElement('h3');
+    h.textContent=r.tests?.title||'Test';
+    const p=document.createElement('p');
+    p.textContent=`Score: ${r.score ?? 'Pending'} / ${r.total_marks ?? '—'}`;
+    const feedback=document.createElement('p');
+    feedback.textContent='Teacher feedback: '+(r.feedback||'No feedback yet.');
+    const date=document.createElement('p');
+    date.className='muted';
+    date.textContent=r.submitted_at?new Date(r.submitted_at).toLocaleString():'';
+    div.append(h,p,feedback,date);
+    $('myResults').appendChild(div);
+  });
+}
+
+async function createTest() {
+  const title=$('newTitle').value.trim();
+  const description=$('newDescription').value.trim();
+  const duration=Number($('newDuration').value);
+  const attempts=Number($('newAttempts').value);
+
+  if(!title || !duration || duration<1) return msg('createMessage','Enter a title and valid duration.');
+
+  const {data,error} = await db.from('tests').insert({
+    title,
+    description,
+    duration_minutes:duration,
+    max_attempts:attempts,
+    created_by:currentUser.id,
+    is_published:false
+  }).select().single();
+
+  if(error) return msg('createMessage',error.message);
+  msg('createMessage','Test created. Add questions below.');
+  $('newTitle').value='';
+  $('newDescription').value='';
+  await loadTeacher();
+  $('questionTest').value=data.id;
+}
+
+async function loadTeacher() {
+  const {data:tests,error} = await db.from('tests')
+    .select('id,title,is_published,duration_minutes,max_attempts')
+    .eq('created_by',currentUser.id)
+    .order('created_at',{ascending:false});
+
+  if(error) {
+    msg('teacherTests',error.message);
+    msg('questionTest',error.message);
+    return;
+  }
+
+  $('teacherTests').innerHTML='';
+  $('questionTest').innerHTML='';
+
+  (tests||[]).forEach(t=>{
+    const option=document.createElement('option');
+    option.value=t.id; option.textContent=t.title;
+    $('questionTest').appendChild(option);
+
+    const div=document.createElement('div');
+    div.className='test';
+    const h=document.createElement('h3');h.textContent=t.title;
+    const p=document.createElement('p');
+    p.textContent=`${t.duration_minutes||30} minutes | ${t.max_attempts||1} attempts | ${t.is_published?'Published':'Draft'}`;
+    const publish=document.createElement('button');
+    publish.textContent=t.is_published?'Unpublish':'Publish';
+    publish.onclick=()=>togglePublish(t.id,!t.is_published);
+    const del=document.createElement('button');
+    del.textContent='Delete test';del.className='danger';
+    del.onclick=()=>deleteTest(t.id);
+    div.append(h,p,publish,del);
+    $('teacherTests').appendChild(div);
+  });
+
+  await loadSubmissions(tests||[]);
+}
+
+async function addQuestion() {
+  const testId=$('questionTest').value;
+  const question=$('questionText').value.trim();
+  const options={
+    A:$('optionA').value.trim(),
+    B:$('optionB').value.trim(),
+    C:$('optionC').value.trim(),
+    D:$('optionD').value.trim()
+  };
+  const correct=$('correctOption').value;
+  const marks=Number($('questionMarks').value)||1;
+
+  if(!testId || !question || Object.values(options).some(v=>!v))
+    return msg('questionMessage','Select a test and complete the question and all four options.');
+
+  const {data:existing,error:readError}=await db.from('questions')
+    .select('question_number').eq('test_id',testId)
+    .order('question_number',{ascending:false}).limit(1);
+
+  if(readError) return msg('questionMessage',readError.message);
+  const nextNumber=(existing?.[0]?.question_number||0)+1;
+
+  const {error}=await db.rpc('add_test_question',{
+    p_test_id:testId,
+    p_question_text:question,
+    p_options:options,
+    p_correct_option:correct,
+    p_marks:marks,
+    p_question_number:nextNumber
+  });
+
+  if(error) return msg('questionMessage',error.message);
+  msg('questionMessage','Question '+nextNumber+' added successfully.');
+  ['questionText','optionA','optionB','optionC','optionD'].forEach(id=>$(id).value='');
+}
+
+async function togglePublish(id,published) {
+  const {error}=await db.from('tests').update({is_published:published}).eq('id',id).eq('created_by',currentUser.id);
+  if(error) return alert(error.message);
+  await loadTeacher();
+}
+
+async function deleteTest(id) {
+  if(!confirm('Delete this test and its associated data?')) return;
+  const {error}=await db.rpc('delete_teacher_test',{p_test_id:id});
+  if(error) return alert(error.message);
+  alert('Test deletion requested successfully.');
+  await loadTeacher();
+}
+
+async function loadSubmissions(tests) {
+  $('teacherResults').textContent='Loading submissions...';
+  if(!tests.length) return msg('teacherResults','You have not created any tests yet.');
+
+  const ids=tests.map(t=>t.id);
+  const {data:allSubs,error}=await db.from('submissions')
+    .select('id,student_id,test_id,score,total_marks,feedback,submitted_at')
+    .in('test_id',ids)
+    .order('submitted_at',{ascending:false});
+
+  if(error) return msg('teacherResults',error.message);
+  if(!allSubs?.length) return msg('teacherResults','No learners have attempted your tests yet.');
+
+  const studentIds=[...new Set(allSubs.map(s=>s.student_id))];
+  const {data:students, error:profileError}=await db.from('profiles')
+    .select('id,full_name,class_name').in('id',studentIds);
+
+  if(profileError) return msg('teacherResults',profileError.message);
+  const names={};
+  (students||[]).forEach(s=>names[s.id]=s);
+
+  const titles={};
+  tests.forEach(t=>titles[t.id]=t.title);
+
+  const wrap=document.createElement('div');wrap.className='tablewrap';
+  const table=document.createElement('table');
+  table.innerHTML='<thead><tr><th>Learner</th><th>Class</th><th>Test</th><th>Score</th><th>Feedback</th><th>Submitted</th><th>Action</th></tr></thead>';
+  const body=document.createElement('tbody');
+
+  allSubs.forEach(s=>{
+    const student=names[s.student_id]||{};
+    const tr=document.createElement('tr');
+    const values=[
+      student.full_name||'Learner',
+      student.class_name||'—',
+      titles[s.test_id]||'Test',
+      `${s.score??'—'} / ${s.total_marks??'—'}`,
+      s.feedback||'—',
+      s.submitted_at?new Date(s.submitted_at).toLocaleString():'—'
+    ];
+    values.forEach(v=>{
+      const td=document.createElement('td');td.textContent=v;tr.appendChild(td);
+    });
+    const action=document.createElement('td');
+    const edit=document.createElement('button');edit.textContent='Feedback';
+    edit.onclick=()=>giveFeedback(s.id,s.feedback||'');
+    action.appendChild(edit);tr.appendChild(action);
+    body.appendChild(tr);
+  });
+  table.appendChild(body);wrap.appendChild(table);
+  $('teacherResults').innerHTML='';
+  $('teacherResults').appendChild(wrap);
+}
+
+async function giveFeedback(id,oldText) {
+  const feedback=prompt('Enter feedback for this learner:',oldText);
+  if(feedback===null) return;
+  const {error}=await db.from('submissions').update({feedback}).eq('id',id);
+  if(error) return alert(error.message);
+  alert('Feedback saved.');
+  await loadTeacher();
+}
+
+async function loadAdminUsers() {
+  $('adminUsers').textContent='Loading users...';
+  const {data,error}=await db.from('profiles')
+    .select('id,full_name,class_name,role').order('full_name');
+
+  if(error) return msg('adminUsers',error.message);
+  const wrap=document.createElement('div');wrap.className='tablewrap';
+  const table=document.createElement('table');
+  table.innerHTML='<thead><tr><th>Name</th><th>Class</th><th>Current role</th><th>Change role</th></tr></thead>';
+  const body=document.createElement('tbody');
+
+  (data||[]).forEach(u=>{
+    const tr=document.createElement('tr');
+    [u.full_name||'—',u.class_name||'—',u.role].forEach(v=>{
+      const td=document.createElement('td');td.textContent=v;tr.appendChild(td);
+    });
+    const td=document.createElement('td');
+    const select=document.createElement('select');
+    ['learner','teacher','admin'].forEach(role=>{
+      const op=document.createElement('option');
+      op.value=role;op.textContent=role;op.selected=role===u.role;
+      select.appendChild(op);
+    });
+    const save=document.createElement('button');save.textContent='Save';
+    save.onclick=()=>changeRole(u.id,select.value);
+    td.append(select,save);tr.appendChild(td);body.appendChild(tr);
+  });
+  table.appendChild(body);wrap.appendChild(table);
+  $('adminUsers').innerHTML='';$('adminUsers').appendChild(wrap);
+}
+
+async function changeRole(id,role) {
+  if(id===currentUser.id && role!=='admin') {
+    return alert('You cannot remove your own administrator role here.');
+  }
+  if(!confirm('Change this account role to '+role+'?')) return;
+  const {error}=await db.from('profiles').update({role}).eq('id',id);
+  if(error) return alert(error.message);
+  alert('Role updated.');
+  loadAdminUsers();
+}
+
+async function loadAdminTests() {
+  const {data,error}=await db.from('tests')
+    .select('id,title,is_published,created_at')
+    .order('created_at',{ascending:false});
+  if(error) return msg('adminTests',error.message);
+
+  $('adminTests').innerHTML='';
+  (data||[]).forEach(t=>{
+    const div=document.createElement('div');div.className='test';
+    const h=document.createElement('h3');h.textContent=t.title;
+    const p=document.createElement('p');p.textContent=t.is_published?'Published':'Draft';
+    const del=document.createElement('button');del.className='danger';del.textContent='Delete';
+    del.onclick=async()=>{
+      if(!confirm('Delete this test?')) return;
+      const {error}=await db.rpc('delete_teacher_test',{p_test_id:t.id});
+      if(error) return alert(error.message);
+      loadAdminTests();
+    };
+    div.append(h,p,del);$('adminTests').appendChild(div);
+  });
+}
+
+async function init() {
+  const {data:{session}}=await db.auth.getSession();
+  if(session?.user) await loadSession(session.user);
+  db.auth.onAuthStateChange((event,session)=>{
+    if(event==='SIGNED_OUT') location.reload();
+  });
+}
+
+init();
 </script>
-</body></html>
+</body>
+</html>
